@@ -1,16 +1,18 @@
-## Hi there 👋
+# Espaço Aishiteru — Backend
 
-<!--
-**espacoaishiteru/espacoaishiteru** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+Backend de agendamento com pagamento automático via Mercado Pago, Google Calendar e Firebase.
 
-Here are some ideas to get you started:
+## Arquivos necessários na pasta (NÃO subir para o GitHub)
+- `firebase-key.json` → chave baixada do Firebase
+- `google-calendar-key.json` → chave baixada do Google Cloud
 
-- 🔭 I’m currently working on ...
-- 🌱 I’m currently learning ...
-- 👯 I’m looking to collaborate on ...
-- 🤔 I’m looking for help with ...
-- 💬 Ask me about ...
-- 📫 How to reach me: ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
--->
+## Rotas disponíveis
+- `GET /` → health check
+- `GET /horarios/:data` → horários disponíveis (ex: /horarios/2024-01-15)
+- `POST /criar-pagamento` → gera cobrança Pix
+- `POST /webhook/mercadopago` → recebe confirmação de pagamento
+- `GET /status-pagamento/:id` → status de um pagamento
+
+## Variáveis de ambiente no Railway
+- `MP_ACCESS_TOKEN` → Access Token do Mercado Pago
+- `WHATSAPP_NUMBER` → número do dono
