@@ -980,15 +980,18 @@ function dismissResume() {
 
 window.addEventListener('load', loadPendingState);
 
-// Available slots per weekday (0=Sun,6=Sat)
+// URL do backend
+const BACKEND_URL = 'https://espacoaishiteru-production.up.railway.app';
+
+// Horários base por dia da semana (sem 12h - horário de almoço)
+// Seg-Sex: 10h às 20h | Sáb: 10h às 16h
 const SLOTS_BY_DAY = {
-  // Seg-Sex: 10h às 20h | Sáb: 10h às 16h
-  1: ['10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00'],
-  2: ['10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00'],
-  3: ['10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00'],
-  4: ['10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00'],
-  5: ['10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00'],
-  6: ['10:00','11:00','12:00','13:00','14:00','15:00','16:00'],
+  1: ['10:00','11:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00'],
+  2: ['10:00','11:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00'],
+  3: ['10:00','11:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00'],
+  4: ['10:00','11:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00'],
+  5: ['10:00','11:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00'],
+  6: ['10:00','11:00','13:00','14:00','15:00','16:00'],
 };
 
 // ── SERVICE TOGGLE ──
@@ -1115,35 +1118,56 @@ function selectDate(date, d, cell) {
   renderSlots(date);
 }
 
-function renderSlots(date) {
+async function renderSlots(date) {
   const dow = date.getDay();
-  const slots = SLOTS_BY_DAY[dow] || [];
+  const slotsBase = SLOTS_BY_DAY[dow] || [];
   const container = document.getElementById('slots-container');
   const grid = document.getElementById('slots-grid');
   const title = document.getElementById('slots-title');
 
   const dateStr = date.toLocaleDateString('pt-BR', {weekday:'long', day:'numeric', month:'long'});
   title.textContent = 'Horários — ' + dateStr;
+  grid.innerHTML = '<p style="color:#8aada9;font-size:13px;grid-column:span 3">Verificando disponibilidade...</p>';
+  container.classList.remove('hidden');
+
+  // Buscar horários bloqueados do backend
+  let bloqueados = [];
+  try {
+    const dataStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
+    const resp = await fetch(`${BACKEND_URL}/horarios/${dataStr}`);
+    const data = await resp.json();
+    bloqueados = data.bloqueados || [];
+  } catch(e) {
+    console.log('Backend indisponível, usando horários locais');
+  }
+
+  // Filtrar slots disponíveis
+  const disponiveis = slotsBase.filter(s => !bloqueados.includes(s));
+
   grid.innerHTML = '';
 
-  if(slots.length === 0){
-    grid.innerHTML = '<p style="color:#8aada9;font-size:13px;grid-column:span 3">Sem horários disponíveis neste dia.</p>';
+  if(slotsBase.length === 0){
+    grid.innerHTML = '<p style="color:#8aada9;font-size:13px;grid-column:span 3">Sem atendimento neste dia.</p>';
+  } else if(disponiveis.length === 0){
+    grid.innerHTML = '<p style="color:#8aada9;font-size:13px;grid-column:span 3">Sem horários disponíveis neste dia. Escolha outra data!</p>';
   } else {
-    slots.forEach(s => {
+    slotsBase.forEach(s => {
       const el = document.createElement('div');
-      el.className = 'slot';
-      el.textContent = s;
-      el.addEventListener('click', () => {
-        document.querySelectorAll('.slot').forEach(x => x.classList.remove('selected'));
-        el.classList.add('selected');
-        selectedSlot = s;
-        saveState();
-        setTimeout(() => goToPix(), 400);
-      });
+      const ocupado = bloqueados.includes(s);
+      el.className = 'slot' + (ocupado ? ' unavailable' : '');
+      el.textContent = ocupado ? s + ' ✕' : s;
+      if(!ocupado){
+        el.addEventListener('click', () => {
+          document.querySelectorAll('.slot').forEach(x => x.classList.remove('selected'));
+          el.classList.add('selected');
+          selectedSlot = s;
+          saveState();
+          setTimeout(() => goToPix(), 400);
+        });
+      }
       grid.appendChild(el);
     });
   }
-  container.classList.remove('hidden');
   container.scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 
@@ -1189,19 +1213,61 @@ function buildPixPayload(amount, txid) {
   return payload;
 }
 
-function goToPix() {
+async function goToPix() {
   if(!selectedService || !selectedDate || !selectedSlot) return;
   const price = selectedService.price;
   const sinal = Math.round(price * 0.3);
   document.getElementById('pix-value').textContent = 'R$ ' + sinal;
   document.getElementById('pix-total').textContent = 'Total da sessão: R$ ' + price;
-  const txid = 'AISH' + Date.now().toString().slice(-10);
-  const code = buildPixPayload(sinal, txid);
-  document.getElementById('pix-code').textContent = code;
+  document.getElementById('pix-code').textContent = 'Gerando código Pix...';
+  document.getElementById('btn-copy-key').disabled = true;
+  document.getElementById('btn-copy-key').textContent = 'Aguarde...';
+
   const pix = document.getElementById('pix-section');
   pix.classList.add('visible');
   setStep(4);
   pix.scrollIntoView({behavior:'smooth', block:'start'});
+
+  // Buscar nome do cliente do campo de anamnese (opcional)
+  const anamnese = document.getElementById('anamnese-text')?.value || '';
+  const dataStr = selectedDate.toISOString().split('T')[0];
+
+  try {
+    const resp = await fetch(`${BACKEND_URL}/criar-pagamento`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        servico: selectedService.name,
+        preco: price,
+        data: dataStr,
+        horario: selectedSlot,
+        nomeCliente: 'Cliente',
+        telefoneCliente: '00000000000',
+        observacoes: anamnese
+      })
+    });
+
+    const data = await resp.json();
+
+    if(data.qrCode) {
+      document.getElementById('pix-code').textContent = data.qrCode;
+      window._pagamentoId = data.id;
+    } else {
+      // fallback para código estático se backend falhar
+      const txid = 'AISH' + Date.now().toString().slice(-10);
+      const code = buildPixPayload(sinal, txid);
+      document.getElementById('pix-code').textContent = code;
+    }
+  } catch(e) {
+    console.error('Erro ao gerar Pix:', e);
+    // fallback para código estático
+    const txid = 'AISH' + Date.now().toString().slice(-10);
+    const code = buildPixPayload(sinal, txid);
+    document.getElementById('pix-code').textContent = code;
+  }
+
+  document.getElementById('btn-copy-key').disabled = false;
+  document.getElementById('btn-copy-key').textContent = 'Copiar código Pix';
 }
 
 function copyPixKey() {
