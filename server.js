@@ -55,7 +55,9 @@ app.get('/horarios/:data', async (req, res) => {
 
     const bloqueados = (eventos.data.items || []).map(evento => {
       const inicio = new Date(evento.start.dateTime || evento.start.date);
-      return `${String(inicio.getHours()).padStart(2,'0')}:${String(inicio.getMinutes()).padStart(2,'0')}`;
+      // Converter para horário de Brasília (UTC-3)
+      const horarioBrasilia = new Date(inicio.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+      return `${String(horarioBrasilia.getHours()).padStart(2,'0')}:${String(horarioBrasilia.getMinutes()).padStart(2,'0')}`;
     });
 
     const snapshot = await db.ref(`horarios_bloqueados/${data.replace(/-/g,'')}`).once('value');
