@@ -774,7 +774,15 @@
 <div id="anamnese" class="hidden" style="max-width:480px; margin: 0 auto 0;">
   <button class="btn-agendar" style="margin-bottom:12px; border-radius:14px; padding:18px; font-size:16px; min-height:56px;" onclick="goToAgenda()">Continuar para agendamento →</button>
   <button onclick="goToAgenda()" style="width:100%; background:#0f5c51; color:#fff; border:none; border-radius:14px; padding:16px; font-size:15px; font-weight:500; cursor:pointer; margin-bottom:24px; transition:background 0.2s;" onmouseover="this.style.background='#0a3d35'" onmouseout="this.style.background='#0f5c51'">Não tenho informações a adicionar</button>
-  <p class="anamnese-title">Informações de saúde</p>
+  <p class="anamnese-title">Seus dados</p>
+  <p class="anamnese-sub" style="margin-bottom:10px;">Precisamos do seu e-mail para enviar a confirmação do pagamento.</p>
+  <input type="email" id="cliente-email" placeholder="Seu e-mail" required
+    style="width:100%; border:1.5px solid var(--teal-light); border-radius:12px; padding:14px 16px; font-size:14px; font-family:'Inter',sans-serif; color:var(--ink); background:var(--white); outline:none; margin-bottom:12px; transition:border-color 0.2s;"
+    onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='var(--teal-light)'">
+  <input type="text" id="cliente-nome" placeholder="Seu nome (opcional)"
+    style="width:100%; border:1.5px solid var(--teal-light); border-radius:12px; padding:14px 16px; font-size:14px; font-family:'Inter',sans-serif; color:var(--ink); background:var(--white); outline:none; margin-bottom:16px; transition:border-color 0.2s;"
+    onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='var(--teal-light)'">
+  <p class="anamnese-title" style="font-size:18px;">Informações de saúde</p>
   <p class="anamnese-sub">Tem algo que devemos saber antes da sua sessão? Ex.: cirurgia recente, parafuso ou pino no corpo, procedimento estético, alergias, gestação.</p>
   <textarea id="anamnese-text" placeholder="Escreva aqui... (ou deixe em branco se não houver nada)"></textarea>
 
@@ -1040,7 +1048,21 @@ function goToAnamnese() {
   document.getElementById('anamnese').scrollIntoView({behavior:'smooth', block:'start'});
 }
 
+function validarEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 function goToAgenda() {
+  const email = document.getElementById('cliente-email')?.value?.trim();
+  if(!email || !validarEmail(email)) {
+    const input = document.getElementById('cliente-email');
+    if(input) {
+      input.style.borderColor = '#e53935';
+      input.placeholder = 'Por favor, insira um e-mail válido';
+      input.focus();
+    }
+    return;
+  }
   document.getElementById('agenda').classList.remove('hidden');
   setStep(3);
   renderCalendar();
