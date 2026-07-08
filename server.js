@@ -76,15 +76,20 @@ app.get('/horarios/:data', async (req, res) => {
 // ════════════════════════════════════════
 app.post('/criar-pagamento', async (req, res) => {
   try {
-    const { servico, preco, data, horario, nomeCliente, telefoneCliente } = req.body;
+    const { servico, preco, data, horario, nomeCliente, emailCliente, telefoneCliente } = req.body;
     const sinal = Math.round(preco * 0.3 * 100) / 100;
+
+    // E-mail do pagador — obrigatório pelo Mercado Pago
+    const emailPagador = emailCliente && emailCliente.includes('@') 
+      ? emailCliente 
+      : `cliente.${Date.now()}@espacoaishiteru.com.br`;
 
     const payload = {
       transaction_amount: sinal,
       description: `Sinal 30% - ${servico} - ${data} às ${horario}`,
       payment_method_id: 'pix',
       payer: {
-        email: `cliente${Date.now()}@aishiteru.temp`,
+        email: emailPagador,
         first_name: nomeCliente || 'Cliente',
         identification: { type: 'CPF', number: '00000000000' }
       },
