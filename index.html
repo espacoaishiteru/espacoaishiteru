@@ -773,7 +773,7 @@
 <!-- ANAMNESE -->
 <div id="anamnese" class="hidden" style="max-width:480px; margin: 0 auto 0;">
   <button class="btn-agendar" style="margin-bottom:12px; border-radius:14px; padding:18px; font-size:16px; min-height:56px;" onclick="goToAgenda()">Continuar para agendamento →</button>
-  <span class="skip-link" style="display:block; text-align:center; margin-bottom:24px;" onclick="goToAgenda()">Não tenho informações a adicionar</span>
+  <button onclick="goToAgenda()" style="width:100%; background:#0f5c51; color:#fff; border:none; border-radius:14px; padding:16px; font-size:15px; font-weight:500; cursor:pointer; margin-bottom:24px; transition:background 0.2s;" onmouseover="this.style.background='#0a3d35'" onmouseout="this.style.background='#0f5c51'">Não tenho informações a adicionar</button>
   <p class="anamnese-title">Informações de saúde</p>
   <p class="anamnese-sub">Tem algo que devemos saber antes da sua sessão? Ex.: cirurgia recente, parafuso ou pino no corpo, procedimento estético, alergias, gestação.</p>
   <textarea id="anamnese-text" placeholder="Escreva aqui... (ou deixe em branco se não houver nada)"></textarea>
@@ -791,7 +791,7 @@
       <span style="font-size:18px; line-height:1.3;">🏫</span>
       <p style="font-size:12px; color:#4a6b67; line-height:1.5;">Ao lado do Senai<br><span style="color:#8aada9;">(Av. Dr. Renato de Andrade Maia)</span></p>
     </div>
-    <a href="https://search.google.com/local/reviews?placeid=ChIJi6qZ61D1zpQRg9Fr21s9CGo" target="_blank"
+    <a href="https://search.google.com/local/reviews?placeid=ChIJi6qZ61D1zpQRg9Fr21s9CGo" target="_blank" rel="noopener noreferrer"
        style="display:flex; align-items:center; justify-content:center; gap:8px; background:#fff; border:1.5px solid #1a8a7a; color:#1a8a7a; border-radius:12px; padding:13px; font-size:14px; font-weight:500; text-decoration:none; transition:background 0.15s;"
        onmouseover="this.style.background='#e8f6f4'" onmouseout="this.style.background='#fff'">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a8a7a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
