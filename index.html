@@ -1141,8 +1141,21 @@ async function renderSlots(date) {
     console.log('Backend indisponível, usando horários locais');
   }
 
-  // Filtrar slots disponíveis
-  const disponiveis = slotsBase.filter(s => !bloqueados.includes(s));
+  // Filtrar horários passados se for hoje
+  const agora = new Date();
+  const ehHoje = date.toDateString() === agora.toDateString();
+  const horaAtual = agora.getHours() * 60 + agora.getMinutes();
+
+  // Filtrar slots disponíveis (não bloqueados e não passados)
+  const disponiveis = slotsBase.filter(s => {
+    if(bloqueados.includes(s)) return false;
+    if(ehHoje) {
+      const [h, m] = s.split(':').map(Number);
+      const slotMinutos = h * 60 + m;
+      return slotMinutos > horaAtual + 30; // pelo menos 30min de antecedência
+    }
+    return true;
+  });
 
   grid.innerHTML = '';
 
@@ -1154,9 +1167,18 @@ async function renderSlots(date) {
     slotsBase.forEach(s => {
       const el = document.createElement('div');
       const ocupado = bloqueados.includes(s);
-      el.className = 'slot' + (ocupado ? ' unavailable' : '');
-      el.textContent = ocupado ? s + ' ✕' : s;
-      if(!ocupado){
+      const passado = ehHoje && (() => {
+        const [h, m] = s.split(':').map(Number);
+        return (h * 60 + m) <= horaAtual + 30;
+      })();
+      const indisponivel = ocupado || passado;
+
+      el.className = 'slot' + (indisponivel ? ' unavailable' : '');
+      if(ocupado) el.textContent = s + ' ✕';
+      else if(passado) el.textContent = s;
+      else el.textContent = s;
+
+      if(!indisponivel){
         el.addEventListener('click', () => {
           document.querySelectorAll('.slot').forEach(x => x.classList.remove('selected'));
           el.classList.add('selected');
